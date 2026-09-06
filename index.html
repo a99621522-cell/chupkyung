@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>첩경 — 사주첩경으로 보는 나</title>
+<meta name="description" content="이석영 사주첩경의 관법으로 격·신살·운을 읽고, 책에 직접 묻는 앱">
+<style>
+:root{--paper:#FBFAF7;--ink:#1F1E1A;--ink2:#5A574F;--line:#E4E0D6;--ink-soft:#8A867C;--ju:#B5342B;--ju-soft:#F4E6E3;--gold:#9C7A2E;--gold-soft:#F3EEDD;--ok:#3C6E47;--warn:#8B5A14;--card:#FFFFFF;--tab:#F3F1EB;--r:6px}
+*{box-sizing:border-box}html,body{margin:0;background:var(--paper);color:var(--ink);font-family:"Noto Serif KR","Nanum Myeongjo","Apple SD Gothic Neo",serif;font-size:16px;line-height:1.7;-webkit-font-smoothing:antialiased}
+a{color:inherit}button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}input,select,textarea{font:inherit;color:inherit}
+header{padding:18px 20px 8px;border-bottom:1px solid var(--line)}header h1{margin:0;font-size:22px;font-weight:600;letter-spacing:-.01em}header h1 small{font-weight:400;color:var(--ink2);font-size:13px;margin-left:8px}
+main{max-width:720px;margin:0 auto;padding:16px 16px 92px}
+.screen{display:none}.screen.on{display:block}
+h2{font-size:17px;font-weight:600;margin:22px 0 10px}h3{font-size:15px;font-weight:600;margin:16px 0 6px;color:var(--ink2)}
+p{margin:6px 0}.muted{color:var(--ink2);font-size:14px}.small{font-size:13px;color:var(--ink-soft)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin:10px 0}
+.card.ju{border-left:3px solid var(--ju)}.card.gold{border-left:3px solid var(--gold)}
+/* 입력 */
+.form label{display:block;font-size:14px;color:var(--ink2);margin:10px 0 4px}.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1;min-width:0}
+input[type=number],input[type=text],select,textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r);background:#fff}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}.seg button{padding:8px 14px;background:#fff}.seg button[aria-pressed=true]{background:var(--ink);color:#fff}
+.btn{display:inline-block;padding:12px 18px;border-radius:var(--r);background:var(--ink);color:#fff;font-weight:600}.btn.sec{background:#fff;border:1px solid var(--line);color:var(--ink)}.btn:disabled{opacity:.5}
+.notice{background:var(--gold-soft);border-radius:var(--r);padding:10px 12px;font-size:14px;margin:10px 0}
+/* 팔자표 */
+.palja{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center;margin:8px 0}.pil{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:8px 4px}.pil .who{font-size:12px;color:var(--ink-soft)}.pil .sip{font-size:12px;color:var(--ink2)}.pil .gan{font-size:30px;line-height:1.1;font-weight:600}.pil .ji{font-size:30px;line-height:1.1;font-weight:600}.pil .un{font-size:12px;color:var(--ink2);margin-top:4px}.pil .il{font-size:11px;color:var(--ink-soft)}
+.pil.today .gan,.pil.today .ji{color:var(--ju)}
+/* 신살 칩 */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.chip{border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:13px;background:#fff}.chip.gil{border-color:var(--gold);color:var(--gold);background:var(--gold-soft)}.chip.hyung{border-color:var(--ju);color:var(--ju)}.chip.info{color:var(--ink2)}
+/* 격 카드 */
+.gyeok .alias{font-size:19px;font-weight:600}.gyeok .name{color:var(--ink2);font-size:14px}.gyeok details{margin-top:8px}.gyeok summary{cursor:pointer;color:var(--ink2);font-size:14px}.kw{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.kw span{font-size:13px;color:var(--ink2);background:var(--tab);border-radius:999px;padding:2px 10px}
+dl{margin:8px 0;display:grid;grid-template-columns:5.5em 1fr;gap:4px 10px;font-size:14px}dt{color:var(--ink-soft)}dd{margin:0}
+/* 가능성·건강 */
+.poss{border-left:3px solid var(--line);padding:8px 12px;margin:8px 0;background:#fff;border-radius:0 var(--r) var(--r) 0}.poss.A{border-left-color:var(--ju)}.poss.B{border-left-color:var(--warn)}.poss .why{font-size:13px;color:var(--ink-soft)}.poss details summary{font-size:13px;color:var(--ink2);cursor:pointer}
+/* 구결 낙관 */
+.gugyeol{display:inline-block;border:2px solid var(--ju);color:var(--ju);border-radius:3px;padding:6px 10px;font-size:15px;letter-spacing:.06em;margin:6px 8px 6px 0;background:#fff;font-weight:600}
+/* 운 */
+.chart{width:100%;height:auto;display:block}.legend{font-size:13px;color:var(--ink2);margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left}th{color:var(--ink-soft);font-weight:500}
+/* 묻는다 */
+.tabs2{display:flex;gap:6px;margin-bottom:10px}.tabs2 button{padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:#fff}.tabs2 button[aria-pressed=true]{background:var(--ju-soft);border-color:var(--ju);color:var(--ju)}
+.quick{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.quick button{border:1px solid var(--line);border-radius:999px;padding:6px 12px;background:#fff;font-size:14px}
+.answer{white-space:pre-wrap;line-height:1.85}.answer .han{color:var(--ink2);cursor:help;border-bottom:1px dotted var(--ink-soft)}.src{font-size:13px;color:var(--ink-soft);margin-top:8px}
+.wait{color:var(--ink2);font-size:14px}.wait::before{content:"";display:inline-block;width:12px;height:12px;border:2px solid var(--line);border-top-color:var(--ju);border-radius:50%;margin-right:8px;vertical-align:-2px;animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.wait::before{animation:none}}
+/* 유료 자리 */
+.lock{border:1px dashed var(--line);border-radius:var(--r);padding:16px;text-align:center;color:var(--ink2);background:var(--tab)}
+/* 탭바 */
+nav.tabbar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:6px 0 calc(6px + env(safe-area-inset-bottom))}nav.tabbar button{flex:1;font-size:12px;color:var(--ink2);padding:6px 0}nav.tabbar button[aria-current=page]{color:var(--ju);font-weight:600}nav.tabbar button .g{display:block;font-size:17px;line-height:1.2}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--ju);outline-offset:2px}
+@media print{header,nav.tabbar,.noprint{display:none}main{padding:0;max-width:none}.screen{display:block!important}}
+</style>
+</head>
+<body>
+<header><h1>첩경 <small>사주첩경으로 보는 나</small></h1></header>
+<main>
+
+<!-- ① 입력 -->
+<section id="s-input" class="screen on">
+  <div class="card form">
+    <p class="muted">태어난 때와 곳을 넣으면 사주첩경의 관법으로 격·신살·운을 읽습니다. 시각은 출생지 경도로 진태양시를 맞춰 세웁니다.</p>
+    <label>생년월일 (양력)</label>
+    <div class="row"><input id="y" type="number" inputmode="numeric" placeholder="년 1971" min="1900" max="2050"><input id="m" type="number" inputmode="numeric" placeholder="월" min="1" max="12"><input id="d" type="number" inputmode="numeric" placeholder="일" min="1" max="31"></div>
+    <label>태어난 시각</label>
+    <div class="row"><input id="h" type="number" inputmode="numeric" placeholder="시 (0~23)" min="0" max="23"><input id="mi" type="number" inputmode="numeric" placeholder="분" min="0" max="59"></div>
+    <label>태어난 곳</label>
+    <div class="row"><select id="loc"><option value="127.0">서울·경기</option><option value="128.6">대구·경북</option><option value="129.1">부산·울산·경남</option><option value="127.4">대전·충청</option><option value="126.9">광주·전라</option><option value="128.9">강릉·강원 영동</option><option value="126.5">제주</option><option value="custom">직접 입력(경도)</option></select><input id="lon" type="number" step="0.1" placeholder="경도 예 128.6" style="display:none"></div>
+    <label>성별</label>
+    <div class="seg" role="group" aria-label="성별"><button id="sexM" aria-pressed="true">남</button><button id="sexF" aria-pressed="false">여</button></div>
+    <p class="small" style="margin-top:12px">밤 11시~12시 사이에 태어났다면 만세력이 세운 그대로 봅니다. 첩경식(일주는 그날, 시만 다음 날 기준)으로 보고 싶으면 아래를 켜 두세요.</p>
+    <label style="display:flex;gap:8px;align-items:center;margin-top:4px"><input id="yaja" type="checkbox" style="width:auto"> 첩경 야자시법으로 세우기</label>
+    <p id="inputMsg" class="small"></p>
+    <div style="margin-top:14px"><button id="go" class="btn">명식 세우기</button></div>
+  </div>
+  <p class="small">서버 주소: <input id="server" type="text" value="" placeholder="비우면 이 페이지와 같은 주소" style="width:60%;padding:6px 8px"></p>
+</section>
+
+<!-- ② 명식 한 장 -->
+<section id="s-myeong" class="screen">
+  <div id="palja"></div>
+  <div id="warn"></div>
+  <h2>신살 — 이 사주에 든 별</h2>
+  <div id="sinsal" class="chips"></div>
+  <p id="sinsalHelp" class="small"></p>
+  <h2>격 — 나는 어떤 사람인가</h2>
+  <div id="gyeok"></div>
+  <h2>가능성 — 첩경 2권이 이 사주에서 짚는 자리</h2>
+  <p class="small">「~한 자리입니다」로 읽으세요. 일어날 일을 찍는 말이 아니라 구조를 말하는 것입니다.</p>
+  <div id="poss"></div>
+  <h2>건강 — 돌볼 자리</h2>
+  <div id="health"></div>
+</section>
+
+<!-- ③ 운 -->
+<section id="s-un" class="screen">
+  <h2>대운 — 열 해 단위 흐름</h2>
+  <div class="card"><svg id="daeunChart" class="chart" viewBox="0 0 720 260" role="img" aria-label="대운 흐름 곡선"></svg><p id="daeunLegend" class="legend"></p></div>
+  <h2>올해와 내년</h2>
+  <div id="seun" class="card"></div>
+  <h2>열두 달 — 절기월 흐름</h2>
+  <div class="card"><svg id="wolChart" class="chart" viewBox="0 0 720 260" role="img" aria-label="열두 달 흐름 곡선"></svg><div id="wolLegend" class="legend"></div></div>
+</section>
+
+<!-- ④ 묻는다 -->
+<section id="s-ask" class="screen">
+  <div class="tabs2" role="tablist"><button id="askMine" aria-pressed="true">내 사주로 묻는다</button><button id="askBook" aria-pressed="false">책에 묻는다</button></div>
+  <div class="card">
+    <div id="quickMine" class="quick"></div>
+    <div id="quickBook" class="quick" style="display:none"></div>
+    <textarea id="q" rows="3" placeholder="예: 올해 재물운은 어떤가 / 귀문살이 뭐야"></textarea>
+    <div class="row" style="align-items:center;margin-top:8px">
+      <div class="seg" role="group" aria-label="읽는 방식"><button id="rdEasy" aria-pressed="true">쉬운 말</button><button id="rdHard" aria-pressed="false">원문체</button></div>
+      <button id="ask" class="btn">묻기</button>
+    </div>
+    <p id="askMsg" class="small"></p>
+  </div>
+  <div id="answers"></div>
+</section>
+
+<!-- ⑤ 간명서 -->
+<section id="s-report" class="screen">
+  <h2>간명서</h2>
+  <p class="muted">명식·격·신살·가능성·건강·대운·열두 달과 지금까지의 문답을 한 부로 묶습니다.</p>
+  <div class="row noprint"><button id="print" class="btn">인쇄·PDF로 저장</button></div>
+  <div id="report"></div>
+</section>
+</main>
+
+<nav class="tabbar" aria-label="화면">
+  <button data-s="s-input" aria-current="page"><span class="g">✎</span>입력</button>
+  <button data-s="s-myeong"><span class="g">四</span>명식</button>
+  <button data-s="s-un"><span class="g">運</span>운</button>
+  <button data-s="s-ask"><span class="g">問</span>묻는다</button>
+  <button data-s="s-report"><span class="g">書</span>간명서</button>
+</nav>
+
+<script>
+// ---------- 상태 ----------
+const S = { sex:'남', birth:null, judge:null, answers:[], last:null, reader:'일반', askMode:'mine' };
+const $ = id => document.getElementById(id);
+const server = () => ($('server').value || '').replace(/\/$/, '');
+const post = async (path, body) => { const r = await fetch(server()+path, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) }); if (!r.ok) throw new Error('서버 응답 '+r.status); return r.json(); };
+const esc = s => String(s??'').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+// 한자(풀이) → 툴팁 표시
+const hanja = s => esc(s).replace(/([가-힣]+)\(([一-龥·]+), ([^)]+)\)/g, '<span class="han" title="$2 — $3">$1</span>');
+
+// ---------- 화면 전환 ----------
+function show(id) { document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id===id)); document.querySelectorAll('nav.tabbar button').forEach(b => b.setAttribute('aria-current', b.dataset.s===id ? 'page' : 'false')); window.scrollTo(0,0); }
+document.querySelectorAll('nav.tabbar button').forEach(b => b.addEventListener('click', () => { if (b.dataset.s !== 's-input' && !S.judge) { show('s-input'); $('inputMsg').textContent = '먼저 명식을 세워 주세요.'; return; } show(b.dataset.s); }));
+$('sexM').onclick = () => { S.sex='남'; $('sexM').setAttribute('aria-pressed','true'); $('sexF').setAttribute('aria-pressed','false'); };
+$('sexF').onclick = () => { S.sex='여'; $('sexF').setAttribute('aria-pressed','true'); $('sexM').setAttribute('aria-pressed','false'); };
+$('loc').onchange = () => $('lon').style.display = $('loc').value==='custom' ? '' : 'none';
+$('rdEasy').onclick = () => { S.reader='일반'; $('rdEasy').setAttribute('aria-pressed','true'); $('rdHard').setAttribute('aria-pressed','false'); };
+$('rdHard').onclick = () => { S.reader='학인'; $('rdHard').setAttribute('aria-pressed','true'); $('rdEasy').setAttribute('aria-pressed','false'); };
+$('askMine').onclick = () => setAsk('mine'); $('askBook').onclick = () => setAsk('book');
+function setAsk(mode) { S.askMode = mode; $('askMine').setAttribute('aria-pressed', mode==='mine'); $('askBook').setAttribute('aria-pressed', mode==='book'); $('quickMine').style.display = mode==='mine'?'':'none'; $('quickBook').style.display = mode==='book'?'':'none'; $('q').placeholder = mode==='mine' ? '예: 올해 재물운은 어떤가 / 내 격에 맞는 일은' : '예: 귀문살이 뭐야 / 재다신약이면 용신을 뭘로 쓰나'; }
+
+// ---------- ① 입력 → 판정 ----------
+$('go').onclick = async () => {
+  const y=+$('y').value, m=+$('m').value, d=+$('d').value, h=$('h').value===''?null:+$('h').value, mi=+($('mi').value||0);
+  if (!(y>=1900&&y<=2050&&m>=1&&m<=12&&d>=1&&d<=31)) { $('inputMsg').textContent = '생년월일을 확인해 주세요 (1900~2050년).'; return; }
+  const lon = $('loc').value==='custom' ? +($('lon').value||127) : +$('loc').value;
+  S.birth = { y, m, d, h: h==null?12:h, min: mi, longitude: lon, sex: S.sex, 야자시정책: $('yaja').checked ? '첩경' : '표준', 시미상: h==null };
+  $('go').disabled = true; $('inputMsg').innerHTML = '<span class="wait">명식을 세우는 중</span>';
+  try { const r = await post('/첩경/판정', S.birth); if (!r.ok) throw new Error(r.error||'판정 실패'); S.judge = r.요약; S.brief = r.브리프; renderMyeong(); renderUn(); renderQuick(); show('s-myeong'); $('inputMsg').textContent=''; }
+  catch (e) { $('inputMsg').textContent = '세우지 못했습니다 — ' + e.message + '. 서버 주소를 확인해 주세요.'; }
+  $('go').disabled = false;
+};
+
+// ---------- ② 명식 ----------
+function renderMyeong() {
+  const j = S.judge; const p = j.팔자, names=['연','월','일','시'], uns = j.운성||[], ss = (j.신살&&j.신살.십이신살&&j.신살.십이신살.해당)||[];
+  $('palja').innerHTML = `<div class="card"><p class="muted">${S.birth.y}년 ${S.birth.m}월 ${S.birth.d}일 ${S.birth.시미상?'(시 미상)':S.birth.h+'시 '+S.birth.min+'분'} · ${S.birth.sex}명${j.보정시각?` · 진태양시 ${j.보정시각.hour}:${String(j.보정시각.minute).padStart(2,'0')}`:''}</p>
+    <div class="palja">${p.map((g,i)=>`<div class="pil ${i===2?'today':''}"><div class="who">${names[i]}주</div><div class="gan">${g[0]}</div><div class="ji">${g[1]}</div><div class="un">${uns[i]?uns[i].운성:''}</div><div class="il">${ss[i]?ss[i].신살:''}</div></div>`).join('')}</div>
+    <p class="small">기둥 아래 작은 글자는 십이운성(기운의 단계)과 십이신살입니다. 가운데 붉은 기둥이 나(일주)입니다.</p></div>`;
+  $('warn').innerHTML = (j.경고||[]).length ? `<div class="notice">${j.경고.map(esc).join('<br>')}</div>` : '';
+  const gil = (j.신살&&j.신살.길신)||[], hy = (j.신살&&j.신살.흉살)||[];
+  $('sinsal').innerHTML = [...gil.map(x=>`<button class="chip gil" data-w="${esc(x)}">${esc(x)}</button>`), ...hy.map(x=>`<button class="chip hyung" data-w="${esc(x)}">${esc(x)}</button>`)].join('') || '<span class="small">두드러진 길신·흉살이 없습니다.</span>';
+  $('sinsal').querySelectorAll('.chip').forEach(b => b.onclick = () => { $('q').value = b.dataset.w.replace(/\(.*$/,'') + '이 뭐야'; setAsk('book'); show('s-ask'); });
+  $('sinsalHelp').textContent = '금빛은 돕는 별(길신), 붉은 테는 조심할 별(흉살)입니다. 칩을 누르면 책에 그 별을 물을 수 있습니다.';
+  $('gyeok').innerHTML = (j.격프로필||[]).map(g => `<div class="card gyeok gold"><div class="alias">${esc(g.별칭)}</div><div class="name">${esc(g.격)}${g.표기!==g.격?` · ${esc(g.표기)}`:''}</div><p>${hanja(g.한줄)}</p><p>${hanja(g.이런사람)}</p><div class="kw">${g.키워드.map(k=>`<span>${esc(k)}</span>`).join('')}</div>
+    <details><summary>맞는 일 · 조심할 자리 · 좋아하는 운</summary><dl><dt>맞는 일</dt><dd>${hanja(g.맞는일)}</dd><dt>조심할 자리</dt><dd>${hanja(g.조심할자리)}</dd><dt>좋아하는 운</dt><dd>${hanja(g.좋아하는운)}</dd><dt>꺼리는 운</dt><dd>${hanja(g.꺼리는운)}</dd></dl>${g.원문발췌&&g.원문발췌.의의?`<h3>책은 이렇게 말한다</h3><p class="small">${esc(g.원문발췌.의의)}</p>`:''}</details></div>`).join('') || '<div class="card"><p class="muted">뚜렷한 격이 서지 않는 사주입니다. 격보다 신살·용신으로 읽는 편이 맞습니다.</p></div>';
+  $('poss').innerHTML = (j.통변||[]).map(t => `<div class="poss ${t.민감||''}"><div>${esc(t.민감==='A' ? t.완곡 : t.민감==='B' ? t.완곡 : t.제목)}</div>${t.민감?`<div class="why">${t.민감==='A'?'조심스럽게 읽을 자리':'가능성으로 읽을 자리'}</div>`:''}</div>`).join('') || '<p class="small">성립한 조문이 없습니다.</p>';
+  const hl = j.건강; $('health').innerHTML = hl ? `<div class="card"><p>${esc(hl.요약)}</p>${hl.항목.map(x=>`<div class="poss ${x.등급}"><div>${esc(x.자리)}</div><details><summary>왜 그런가</summary><p class="small">${esc(x.근거)}</p></details></div>`).join('')}<details><summary>몸의 부위 표 (강헌 의명학)</summary><table><tr><th>자리</th><th>천간</th><th>지지</th></tr>${hl.신체부위표.map(t=>`<tr><td>${t.자리}</td><td>${t.천간} — ${esc(t.부위)}</td><td>${t.지지} — ${esc(t.지지부위)}</td></tr>`).join('')}</table></details><p class="small">${esc(hl.안내)}</p></div>` : '';
+}
+
+// ---------- ③ 운 ----------
+const scoreOf = x => typeof x.점수==='number' ? x.점수 : (x.등급==='길'?2:x.등급==='흉'?-2:0);
+function curve(svgId, items, labelFn, nowIdx) {
+  const svg = $(svgId); const W=720,H=260,L=36,R=16,T=24,B=54; const n=items.length; if(!n){svg.innerHTML='';return;}
+  const xs = i => L + (W-L-R)*(n===1?0.5:i/(n-1)); const ys = v => T + (H-T-B)*(1-(v+3)/6);
+  const pts = items.map((it,i)=>[xs(i), ys(Math.max(-3,Math.min(3,scoreOf(it))))]);
+  const path = pts.map((p,i)=> (i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  svg.innerHTML = `<rect x="${L}" y="${T}" width="${W-L-R}" height="${(H-T-B)/2}" fill="#F3EEDD"/><rect x="${L}" y="${T+(H-T-B)/2}" width="${W-L-R}" height="${(H-T-B)/2}" fill="#F7F2F1"/>
+    <line x1="${L}" x2="${W-R}" y1="${ys(0)}" y2="${ys(0)}" stroke="#E4E0D6"/>
+    ${nowIdx>=0?`<rect x="${xs(nowIdx)-18}" y="${T}" width="36" height="${H-T-B}" fill="#F4E6E3"/>`:''}
+    <path d="${path}" fill="none" stroke="#1F1E1A" stroke-width="2"/>
+    ${pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="${i===nowIdx?6:4}" fill="${i===nowIdx?'#B5342B':'#1F1E1A'}"/>`).join('')}
+    ${items.map((it,i)=>`<text x="${xs(i)}" y="${H-30}" font-size="12" text-anchor="middle" fill="#5A574F">${labelFn(it,i)}</text>`).join('')}
+    <text x="${L}" y="14" font-size="12" fill="#8A867C">밝은 쪽</text><text x="${L}" y="${H-B+14}" font-size="12" fill="#8A867C">지킬 쪽</text>`;
+}
+const act = x => x.등급==='길' ? '밀고 가기 좋은' : x.등급==='흉' ? '큰 결정 미루기' : '평온';
+function renderUn() {
+  const u = S.judge.운; if (!u) { $('daeunLegend').textContent = '시각을 모르면 운을 세우지 못합니다.'; return; }
+  const nowD = u.대운.findIndex(d=>d.현재);
+  curve('daeunChart', u.대운, d => `${d.간지} ${(d.시작시점||'').split('.')[0]}`, nowD);
+  $('daeunLegend').textContent = `대운수 ${u.대운수}(${u.세밀?u.세밀.년+'년 '+u.세밀.개월+'개월':''}) · ${u.방향} · 붉은 기둥이 지금 대운(${u.현재대운||'—'}). 곡선은 이 사주에 필요한 기운(용신)과 부딪침을 함께 셈한 결입니다.`;
+  $('seun').innerHTML = `<table><tr><th>해</th><th>간지</th><th>결</th></tr>${u.세운.map(y=>`<tr><td>${y.연도}</td><td>${y.간지}</td><td>${y.등급==='길'?'밝은 해':y.등급==='흉'?'지킬 해':'평온한 해'}</td></tr>`).join('')}</table>`;
+  const yr = Object.keys(u.월운)[0]; const mo = u.월운[yr]||[];
+  curve('wolChart', mo, (x,i) => x.절기, -1);
+  $('wolLegend').innerHTML = `<b>${yr}년</b> 절기월 기준(절입일부터 다음 절입 전날까지). ` + mo.map(x=>`${x.절기}(${(x.시작||'').slice(5,10)}) ${act(x)}`).join(' · ');
+}
+
+// ---------- ④ 묻는다 ----------
+function renderQuick() {
+  const mine = ['올해 재물운은 어떤가','내 격에 맞는 일은 무엇인가','올해 자리(승진·이직) 운은','가족 인연은 어떤가','건강에서 돌볼 자리는','지금 대운의 결은','앞으로 열두 달 흐름'];
+  const book = ['이 사주의 격을 책은 어떻게 설명하나','신살 중 조심할 것은 무엇인가','귀문살이 뭐야','재다신약이면 용신을 뭘로 쓰나','대운수는 어떻게 세우나','야자시는 어떻게 보나'];
+  $('quickMine').innerHTML = mine.map(t=>`<button>${t}</button>`).join(''); $('quickBook').innerHTML = book.map(t=>`<button>${t}</button>`).join('');
+  document.querySelectorAll('.quick button').forEach(b => b.onclick = () => { $('q').value = b.textContent; });
+}
+$('ask').onclick = async () => {
+  const q = $('q').value.trim(); if (!q) return; $('ask').disabled = true; $('askMsg').innerHTML = '<span class="wait">읽고 있습니다 (무료 서버는 첫 응답에 30초쯤 걸릴 수 있습니다)</span>';
+  try {
+    let r; const cat = /재물|돈/.test(q)?'재물':/승진|이직|자리|직업|일/.test(q)?'직업':/가족|부모|자녀|처|남편|형제/.test(q)?'가족':/건강|몸/.test(q)?'건강':/올해|금년|내년|열두|달/.test(q)?'금년운세':/대운/.test(q)?'대운':null;
+    const qq = S.last && S.askMode==='mine' && /(그럼|그러면|그것|이어서|더|또)/.test(q) ? `[이어묻기] 앞 물음: ${S.last.q} / 앞 답 맺음: ${S.last.tail} ⇒ ${q}` : q;
+    if (S.askMode==='mine') r = await post('/첩경', { ...S.birth, question: qq, category: cat, 독자: S.reader });
+    else r = await post('/책', { question: q, 독자: S.reader, ...(S.birth ? { y:S.birth.y, m:S.birth.m, d:S.birth.d, h:S.birth.h, min:S.birth.min, longitude:S.birth.longitude, sex:S.birth.sex } : {}) });
+    if (!r.ok) throw new Error(r.error||'실패');
+    const text = r.답변 || (r.mode==='mock' ? (S.askMode==='mine' ? '(서버에 열쇠가 없어 답을 쓰지 못했습니다. 판정 재료만 확인됩니다.)' : (r.근거||[]).map((t,i)=>`[근거 ${i+1}] ${t}`).join('\n\n')) : '');
+    const tail = (text.match(/정리하면[^\n]*/)||[text.split('\n').pop()])[0].slice(0,120);
+    S.answers.unshift({ q, text, mode:S.askMode, src:r.출처, when:new Date().toLocaleString('ko-KR') }); S.last = { q, tail };
+    $('answers').innerHTML = S.answers.map(a=>`<div class="card ${a.mode==='book'?'ju':''}"><p class="muted">${esc(a.q)} <span class="small">· ${a.mode==='book'?'책에 묻다':'내 사주'} · ${a.when}</span></p><div class="answer">${hanja(a.text)}</div>${a.src?`<div class="src">출처: ${a.src.slice(0,4).map(s=>esc(s.권+' '+(s.항목||'').slice(0,26))).join(' / ')}</div>`:''}${r.미통과?'<p class="small">검사를 다 통과하지 못한 답입니다. 재료 밖 표현이 섞였을 수 있습니다.</p>':''}</div>`).join('');
+    $('askMsg').textContent = ''; $('q').value = '';
+  } catch (e) { $('askMsg').textContent = '답을 받지 못했습니다 — ' + e.message; }
+  $('ask').disabled = false;
+};
+
+// ---------- ⑤ 간명서 ----------
+function renderReport() {
+  const j = S.judge; if (!j) { $('report').innerHTML = '<p class="muted">먼저 명식을 세워 주세요.</p>'; return; }
+  $('report').innerHTML = `<div class="card"><h3>명식</h3><p>${j.팔자.join(' ')} · ${S.birth.sex}명</p>${$('palja').innerHTML}</div>
+   <div class="card"><h3>격</h3>${$('gyeok').innerHTML}</div><div class="card"><h3>신살</h3>${$('sinsal').innerHTML}</div><div class="card"><h3>가능성</h3>${$('poss').innerHTML}</div><div class="card"><h3>건강</h3>${$('health').innerHTML}</div>
+   <div class="card"><h3>운</h3>${$('daeunChart').outerHTML}<p class="small">${esc($('daeunLegend').textContent)}</p>${$('seun').innerHTML}${$('wolChart').outerHTML}<p class="small">${$('wolLegend').innerHTML}</p></div>
+   ${S.answers.length?`<div class="card"><h3>문답</h3>${S.answers.slice().reverse().map(a=>`<p class="muted">${esc(a.q)}</p><div class="answer">${hanja(a.text)}</div>`).join('')}</div>`:''}`;
+}
+$('print').onclick = () => { renderReport(); window.print(); };
+document.querySelector('nav.tabbar button[data-s="s-report"]').addEventListener('click', renderReport);
+</script>
+</body>
+</html>
