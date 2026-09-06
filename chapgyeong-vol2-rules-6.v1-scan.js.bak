@@ -1,0 +1,464 @@
+// ============================================================
+// chapgyeong-vol2-rules-6.js — 2권 미구현 주제 보완 (원문 PDF 재판독 1차)
+// 九. 다른 아버지 밥을 먹는다 (원문 28~33쪽)
+// 추리: "一. 日坐財星이 他柱財와 聯合한 者" — 일지 재성이 타주 재와
+// (육합 또는 저자 독창합으로) 연합. 저자독창합 4종 표는 원문 30~31쪽과
+// 시각 대조로 일치 확인(준삼합·준방합·동합·우합=艮丑寅巽辰巳坤未申乾戌亥).
+// ============================================================
+const T = require('./chapgyeong-vol1-tables.js');
+const B = require('./chapgyeong-vol1-basics.js');
+const Y = require('./chapgyeong-vol1-yukchin.js');
+const D = require('./chapgyeong-vol2-dokchang.js');
+
+function getRelations(saju) {
+  return B.checkBranchRelations([saju.yBranch, saju.mBranch, saju.dBranch, saju.tBranch]);
+}
+
+// 九. 다른 아버지 밥을 먹다 — 일지 재성이 다른 기둥 재와 (모든 합 종류로) 연합
+function checkDareunAbeoji(saju) {
+  const ilJaeJijanggan = (T.JIJANGGAN[saju.dBranch]||[]).filter(g => ['정재','편재'].includes(Y.getSipseong(saju.dStem,g)));
+  if (!ilJaeJijanggan.length) return { 성립:false };
+
+  const otherBranches = [saju.yBranch, saju.mBranch, saju.tBranch];
+  const rel = getRelations(saju);
+  for (const ob of otherBranches) {
+    const obJaeJijanggan = (T.JIJANGGAN[ob]||[]).filter(g => ['정재','편재'].includes(Y.getSipseong(saju.dStem,g)));
+    if (!obJaeJijanggan.length) continue;
+    const yukhap = rel.합.some(h => h.includes(saju.dBranch) && h.includes(ob));
+    const dokchang = D.checkJeojaDokchangHap(saju.dBranch, ob);
+    if (yukhap || dokchang) {
+      return { 성립:true, 근거: yukhap ? `일지 재성이 타주(${ob}) 재와 육합으로 연합` : `일지 재성이 타주(${ob}) 재와 ${dokchang}으로 연합`,
+               결과: '다른 아버지의 밥을 먹어 본다(계부·이성 부친 인연)' };
+    }
+  }
+  return { 성립:false };
+}
+
+// vol2 파이프라인 호환 래퍼
+function topic09_dareunAbeoji(saju) {
+  const r = checkDareunAbeoji(saju);
+  return { 판정: r.성립, 근거: r.성립 ? [r.근거] : [], 결과: r.결과 || null };
+}
+
+
+// ============================================================
+// 七. 어머니가 재가(再嫁)한다 (원문 25~26쪽 시각 판독)
+// 추리: ① 인수(모)가 도화에 임함 ② 인수가 암합(타간과 천간합)함
+// ============================================================
+const STEM_HAP = { 갑기:1, 을경:1, 병신:1, 정임:1, 무계:1 };
+function stemHap(a,b){ return !!STEM_HAP[[a,b].sort().join('')]; }
+
+function getSamhapKey(branch) {
+  for (const k of Object.keys(T.DOHWA)) if (k.includes(branch)) return k;
+  return null;
+}
+
+function checkMochinJaega(saju) {
+  const ilgan = saju.dStem;
+  const stems = [saju.yStem, saju.mStem, saju.dStem, saju.tStem];
+  const branches = [saju.yBranch, saju.mBranch, saju.dBranch, saju.tBranch];
+  const 근거 = [];
+  // 인수 위치 수집(천간 + 지지 정기)
+  const inStemIdx = stems.map((st,i)=>i!==2 && ['정인','편인'].includes(Y.getSipseong(ilgan,st)) ? i : -1).filter(i=>i>=0);
+  const inBranchIdx = branches.map((b,i)=>{
+    const jeonggi = (T.JIJANGGAN[b]||[]).slice(-1)[0];
+    return ['정인','편인'].includes(Y.getSipseong(ilgan,jeonggi)) ? i : -1;
+  }).filter(i=>i>=0);
+  if (!inStemIdx.length && !inBranchIdx.length) return { 성립:false };
+  // ① 인수 지지가 도화(년지 삼합 기준)에 임함
+  const yearKey = getSamhapKey(saju.yBranch);
+  if (yearKey) {
+    const dohwaBranch = T.DOHWA[yearKey];
+    if (inBranchIdx.some(i => branches[i] === dohwaBranch)) 근거.push('인수(모)가 도화에 임함');
+  }
+  // ② 인수 천간이 타 천간과 암합(천간합)
+  for (const i of inStemIdx) {
+    for (let j=0;j<4;j++) {
+      if (j===i) continue;
+      if (stemHap(stems[i], stems[j])) { 근거.push(`인수(${stems[i]})가 ${stems[j]}와 암합`); break; }
+    }
+    if (근거.length >= 2) break;
+  }
+  if (!근거.length) return { 성립:false };
+  return { 성립:true, 근거, 결과:'모친이 재가(再嫁)하여 본다' };
+}
+function topic07_mochinJaega(saju) {
+  const r = checkMochinJaega(saju);
+  return { 판정: r.성립, 근거: r.근거||[], 결과: r.결과||null };
+}
+
+// ============================================================
+// 八. 다른(여러) 어머니를 모셔 본다 (원문 27~28쪽 시각 판독)
+// 추리: ① 多逢印綬者(인수를 많이 만남) ② 인수가 재(부)와 암합한 자
+// ============================================================
+function checkYeoreoEomeoni(saju) {
+  const ilgan = saju.dStem;
+  const stems = [saju.yStem, saju.mStem, saju.dStem, saju.tStem];
+  const 근거 = [];
+  const G1 = require('./chapgyeong-vol4-gyeokguk.js');
+  const inCount = G1.countSipseongAll(saju, ['정인','편인']).count;
+  if (inCount >= 3) 근거.push(`인수를 많이 만남(多逢印綬, ${inCount}개)`);
+  // 인수 천간이 재 천간과 암합
+  for (let i=0;i<4;i++) {
+    if (i===2) continue;
+    if (!['정인','편인'].includes(Y.getSipseong(ilgan, stems[i]))) continue;
+    for (let j=0;j<4;j++) {
+      if (j===2 || j===i) continue;
+      if (['정재','편재'].includes(Y.getSipseong(ilgan, stems[j])) && stemHap(stems[i], stems[j])) {
+        근거.push(`인수(모, ${stems[i]})가 재(부, ${stems[j]})와 암합`); break;
+      }
+    }
+  }
+  if (!근거.length) return { 성립:false };
+  return { 성립:true, 근거, 결과:'다른(여러) 어머니를 모셔 본다(서모·계모 인연)' };
+}
+function topic08_yeoreoEomeoni(saju) {
+  const r = checkYeoreoEomeoni(saju);
+  return { 판정: r.성립, 근거: r.근거||[], 결과: r.결과||null };
+}
+
+
+// ============================================================
+// 二. 선조 제사에 무성의(先祖奉祀 無誠意)하다 (원문 13쪽 시각 판독)
+// 추리: ① 年月이 冲·刑한 者 ② (年이) 空亡한 者
+// (년=선조 자리가 충·형·공망으로 손상되면 조상 받듦에 성의 없음)
+// ============================================================
+const G60 = require('./chapgyeong-vol1-gapja60.js');
+function getGongmangOfIlju(saju) {
+  const sun = G60.getSunInfo(saju.dStem + saju.dBranch);
+  if (!sun) return [];
+  return T.GONGMANG[sun.순 + '순'] || [];
+}
+function checkSeonjoBongsa(saju) {
+  const 근거 = [];
+  const rel = getRelations(saju);
+  const yb = saju.yBranch, mb = saju.mBranch;
+  if (rel.충.some(c => c.includes(yb) && c.includes(mb))) 근거.push('년월이 상충(선조 자리 손상)');
+  if (rel.형.some(h => h.includes(yb) && h.includes(mb))) 근거.push('년월이 상형');
+  const gm = getGongmangOfIlju(saju);
+  if (gm.includes(yb)) 근거.push('년지가 공망(선조 자리 비어 있음)');
+  if (!근거.length) return { 성립:false };
+  return { 성립:true, 근거, 결과:'선조 제사(봉사)에 무성의하다' };
+}
+function topic02_seonjoBongsa(saju) {
+  const r = checkSeonjoBongsa(saju);
+  return { 판정: r.성립, 근거: r.근거||[], 결과: r.결과||null };
+}
+
+
+// ============================================================
+// 一一. 외삼촌·처남이 고독하다 (원문 34~37쪽 시각 판독)
+// 실례 판정 공통 조건: 외숙성(인수 계열)·처남성(재 계열)이 앉은 자리가
+// 형·충을 맞거나 백호대살에 임한 者
+// ============================================================
+const BAEKHO_ILJU = ['갑진','을미','병술','정축','무진','임술','계축'];
+function checkOesukCheonam(saju) {
+  const ilgan = saju.dStem;
+  const pillars = [
+    [saju.yStem, saju.yBranch], [saju.mStem, saju.mBranch],
+    [saju.dStem, saju.dBranch], [saju.tStem, saju.tBranch],
+  ];
+  const rel = getRelations(saju);
+  const 근거 = [];
+  for (let i=0;i<4;i++) {
+    const [st, br] = pillars[i];
+    const stemSip = i!==2 ? Y.getSipseong(ilgan, st) : null;
+    const jeonggi = (T.JIJANGGAN[br]||[]).slice(-1)[0];
+    const brSip = Y.getSipseong(ilgan, jeonggi);
+    const isTarget = ['정재','편재','정인','편인'].includes(stemSip) || ['정재','편재','정인','편인'].includes(brSip);
+    if (!isTarget) continue;
+    const 육친 = ['정재','편재'].includes(stemSip)||['정재','편재'].includes(brSip) ? '처남성(재)' : '외숙성(인수)';
+    const hyeongchung = rel.충.some(c=>c.includes(br)) || rel.형.some(h=>h.includes(br));
+    if (hyeongchung) { 근거.push(`${육친}이 형·충을 맞음`); }
+    if (BAEKHO_ILJU.includes(st+br)) { 근거.push(`${육친} 기둥(${st}${br})이 백호대살`); }
+  }
+  if (!근거.length) return { 성립:false };
+  return { 성립:true, 근거:[...new Set(근거)], 결과:'외삼촌·처남이 고독하다' };
+}
+function topic11_oesukCheonam(saju) {
+  const r = checkOesukCheonam(saju);
+  return { 판정: r.성립, 근거: r.근거||[], 결과: r.결과||null };
+}
+
+
+// ============================================================
+// 一二. 조모 또는 장모 두 분을 모셔 본다 (원문 36~37쪽 시각 판독)
+// 추리: 편인·식신을 多逢한 者 (조모·장모성이 거듭 나타남 — 포함적 조건이므로 지장간 전체 기준)
+// ============================================================
+function checkJomoJangmo(saju) {
+  const G1 = require('./chapgyeong-vol4-gyeokguk.js');
+  // [원문 37쪽 조건] 상관·식신을 많이 만난 자 (합본 확인: 편인 아님 → 상관·식신)
+  const sikCount = G1.countSipseongAll(saju, ['식신','상관']).count;
+  const 근거 = [];
+  if (sikCount >= 4) 근거.push(`상관·식신 다봉(${sikCount}개)`);
+  if (!근거.length) return { 성립:false };
+  return { 성립:true, 근거, 결과:'조모 또는 장모 두 분을 모셔 본다' };
+}
+function topic12_jomoJangmo(saju) {
+  const r = checkJomoJangmo(saju);
+  return { 판정: r.성립, 근거: r.근거||[], 결과: r.결과||null };
+}
+
+
+// ============================================================
+// 一三. 장모를 봉양하여 본다 (원문 38~41쪽 시각 판독)
+// 장모성 = 식신·상관(처=재를 낳는 별). 추리:
+// ① 일지(처궁)에 식상을 놓고 타주에 재(처)가 있는 者
+// ② 타주의 식상이 일지와 합한 者
+// ============================================================
+function checkJangmoBongyang(saju) {
+  const ilgan = saju.dStem;
+  const 근거 = [];
+  const rel = getRelations(saju);
+  const branches = [saju.yBranch, saju.mBranch, saju.dBranch, saju.tBranch];
+  const stems = [saju.yStem, saju.mStem, saju.dStem, saju.tStem];
+  const ilSikJijang = (T.JIJANGGAN[saju.dBranch]||[]).some(g => ['식신','상관'].includes(Y.getSipseong(ilgan,g)));
+  const hasJaeOther = [0,1,3].some(i =>
+    ['정재','편재'].includes(Y.getSipseong(ilgan, stems[i])) ||
+    (T.JIJANGGAN[branches[i]]||[]).some(g => ['정재','편재'].includes(Y.getSipseong(ilgan,g))));
+  if (ilSikJijang && hasJaeOther) 근거.push('일지(처궁)에 식상(장모성)을 놓고 타주에 재(처)가 있음');
+  // ② 타주 식상 지지가 일지와 합
+  for (const i of [0,1,3]) {
+    const jeonggi = (T.JIJANGGAN[branches[i]]||[]).slice(-1)[0];
+    if (!['식신','상관'].includes(Y.getSipseong(ilgan, jeonggi))) continue;
+    if (rel.합.some(h => h.includes(branches[i]) && h.includes(saju.dBranch))) {
+      근거.push(`타주 식상(${branches[i]})이 일지와 합함`); break;
+    }
+  }
+  if (!근거.length) return { 성립:false };
+  return { 성립:true, 근거:[...new Set(근거)], 결과:'장모를 봉양하여 본다' };
+}
+function topic13_jangmoBongyang(saju) {
+  const r = checkJangmoBongyang(saju);
+  return { 판정: r.성립, 근거: r.근거||[], 결과: r.결과||null };
+}
+
+
+// ============================================================
+// 一四. 이복형제(자매)가 있다 (원문 42~45쪽 시각 판독)
+// 추리: ① 일지가 비겁(형제성) 지지와 합·형을 이루는 者
+//        ② 일간이 타간과 합화하여 그 화기(化氣)가 비겁이 되는 者
+// ============================================================
+const STEM_HAP_HWA_14 = { 갑기:'토', 을경:'금', 병신:'수', 정임:'목', 무계:'화' };
+function checkIbokHyeongje(saju) {
+  const ilgan = saju.dStem;
+  const ilOh = Y.ohaengOf(ilgan);
+  const 근거 = [];
+  const rel = getRelations(saju);
+  const branches = [saju.yBranch, saju.mBranch, saju.dBranch, saju.tBranch];
+  const stems = [saju.yStem, saju.mStem, saju.dStem, saju.tStem];
+  // ① 일지-타지 합/형인데 그 타지 정기가 비겁
+  for (const i of [0,1,3]) {
+    const jeonggi = (T.JIJANGGAN[branches[i]]||[]).slice(-1)[0];
+    if (!['비견','비겁','겁재'].includes(Y.getSipseong(ilgan, jeonggi))) continue;
+    const hap = rel.합.some(h => h.includes(saju.dBranch) && h.includes(branches[i]));
+    const hyeong = rel.형.some(h => h.includes(saju.dBranch) && h.includes(branches[i]));
+    if (hap || hyeong) { 근거.push(`일지가 비겁(${branches[i]})과 ${hap?'합':'형'}을 이룸`); break; }
+  }
+  // ② 일간 합화 → 화기가 비겁 오행
+  for (const i of [0,1,3]) {
+    const key = [ilgan, stems[i]].sort().join('');
+    const hwa = STEM_HAP_HWA_14[key];
+    if (hwa && hwa === ilOh) { 근거.push(`일간이 ${stems[i]}와 합화(${hwa}) — 화기가 비겁이 됨`); break; }
+  }
+  if (!근거.length) return { 성립:false };
+  return { 성립:true, 근거, 결과:'이복형제(자매)가 있다' };
+}
+function topic14_ibokHyeongje(saju) {
+  const r = checkIbokHyeongje(saju);
+  return { 판정: r.성립, 근거: r.근거||[], 결과: r.결과||null };
+}
+
+
+// ============================================================
+// 一五. 고부간(姑婦間)에 불화한다 (원문 45~48쪽 시각 판독)
+// 실례 공통: 재(처)와 인수(모)가 서로 충·형하거나, 한쪽이 왕성해 상대를 극함
+// ============================================================
+function checkGobuBulhwa(saju) {
+  // [원문 45쪽 조건] ① 인수 약·재 다, 또는 재 약·인수 왕 ② 일월지가 충·원진, 또는 재와 인이 제화 없이 쟁투
+  const ilgan = saju.dStem;
+  const 근거 = [];
+  const rel = getRelations(saju);
+  const G1 = require('./chapgyeong-vol4-gyeokguk.js');
+  const jaeCount = G1.countSipseongAll(saju, ['정재','편재']).count;
+  const inCount = G1.countSipseongAll(saju, ['정인','편인']).count;
+  if (jaeCount >= 3 && inCount >= 1 && inCount <= 1) 근거.push(`인수 약(${inCount})·재 다(${jaeCount})`);
+  if (inCount >= 3 && jaeCount >= 1 && jaeCount <= 1) 근거.push(`재 약(${jaeCount})·인수 왕(${inCount})`);
+  if (jaeCount >= 1 && inCount >= 1) {
+    const pair = [saju.mBranch, saju.dBranch];
+    const r2 = B.checkBranchRelations(pair);
+    if (r2.충.length) 근거.push('일월지 상충(재·인 쟁투)');
+    if (r2.원진 && r2.원진.length) 근거.push('일월지 원진(재·인 쟁투)');
+  }
+  if (!근거.length) return { 성립:false };
+  return { 성립:true, 근거:[...new Set(근거)], 결과:'고부간에 정이 없다(불화)' };
+}
+function topic15_gobuBulhwa(saju) {
+  const r = checkGobuBulhwa(saju);
+  return { 판정: r.성립, 근거: r.근거||[], 결과: r.결과||null };
+}
+
+
+// ============================================================
+// 一六. 시모간(媤母間)에 불화한다 — 여명 기준 (원문 48~50쪽 시각 판독)
+// 시모성 = 재(남편 관을 낳는 별). 추리: ① 비견·비겁 太旺한 者(비겁이
+// 재=시모를 극) ② 인수 太旺한 者(재극인 — 시모와 전투)
+// ============================================================
+function checkSimoBulhwa(saju, sex) {
+  if (sex !== '여') return { 성립:false };
+  const G1 = require('./chapgyeong-vol4-gyeokguk.js');
+  const jaeCount = G1.countSipseongAll(saju, ['정재','편재']).count;
+  if (jaeCount === 0) return { 성립:false }; // 시모성 자체가 있어야
+  const 근거 = [];
+  const bigyeopCount = G1.countSipseongAll(saju, ['비견','비겁']).count;
+  const inCount = G1.countSipseongAll(saju, ['정인','편인']).count;
+  if (bigyeopCount >= 3) 근거.push(`비겁 태왕(${bigyeopCount}) — 재(시모)를 극함`);
+  if (inCount >= 3) 근거.push(`인수 태왕(${inCount}) — 재(시모)와 상전(재극인)`);
+  if (!근거.length) return { 성립:false };
+  return { 성립:true, 근거, 결과:'시모간에 불화한다' };
+}
+function topic16_simoBulhwa(saju, sex) {
+  const r = checkSimoBulhwa(saju, sex);
+  return { 판정: r.성립, 근거: r.근거||[], 결과: r.결과||null };
+}
+
+
+// ============================================================
+// 三七. 기생(妓生) 생활의 직업 — 여명 (원문 148~151쪽 시각 판독)
+// 해설 핵심: 상관(재예·접객)이 태왕한데 관성(부성)은 미약하거나 파극됨
+// — 남편성이 상해 정상 혼가가 어렵고, 왕성한 식상 재예로 접객업에 나감
+// ============================================================
+function checkGisaeng(saju, sex) {
+  if (sex !== '여') return { 성립:false };
+  const G1 = require('./chapgyeong-vol4-gyeokguk.js');
+  const ilgan = saju.dStem;
+  const sanggwanCount = G1.countSipseongAll(saju, ['상관']).count;
+  const sikTotal = G1.countSipseongAll(saju, ['식신','상관']).count;
+  if (sanggwanCount < 2 || sikTotal < 3) return { 성립:false }; // 상관 위주 식상 태왕
+  const gwansalCount = G1.countSipseongAll(saju, ['정관','편관']).count;
+  const 근거 = [`상관 태왕(상관 ${sanggwanCount}, 식상 계 ${sikTotal})`];
+  if (gwansalCount === 0) 근거.push('관성(부성) 전무 — 상부(傷夫)');
+  else if (gwansalCount <= 1) 근거.push('관성 미약(1점) — 왕한 상관에 파극됨');
+  else return { 성립:false }; // 관이 든든하면 불성립
+  return { 성립:true, 근거, 결과:'기생(접객) 생활의 직업을 갖는다' };
+}
+function topic37_gisaeng(saju, sex) {
+  const r = checkGisaeng(saju, sex);
+  return { 판정: r.성립, 근거: r.근거||[], 결과: r.결과||null };
+}
+
+
+// ============================================================
+// 三八. 음식물업(飮食物業)을 하여 본다 (원문 152~155쪽 시각 판독)
+// 해설 핵심: 식신·상관(먹을 것)이 재를 생하는 구조(식상생재) —
+// 식신으로 재물을 만드는 업. 같은 기둥 안에서 천간(식상)→지지(재)
+// 직접 생이면 더욱 확실(살인상생 v25와 같은 "같은 기둥" 원리).
+// ============================================================
+function checkEumsikmulEop(saju) {
+  // [원문 153쪽 조건] ① 임신·임자·임진·경신·경자·경진일 ② 무신·무자일 상관생재/수재국, 기축·기묘일 재살국
+  // ③ 병신·병자·병진일 재살왕, 임계일 식신국·재국 ④ 일진 불문 상관생재·식신생재"격"을 이룬 자(월지 식상격+재 투출)
+  const G1 = require('./chapgyeong-vol4-gyeokguk.js');
+  const ilgan = saju.dStem, ilju = saju.dStem + saju.dBranch;
+  const branches = [saju.yBranch, saju.mBranch, saju.dBranch, saju.tBranch];
+  const stems = [saju.yStem, saju.mStem, saju.tStem];
+  const 근거 = [];
+  const GEUK = { 목:'토', 화:'금', 토:'수', 금:'목', 수:'화' };
+  const GEUKBY = { 목:'금', 화:'수', 토:'목', 금:'화', 수:'토' };
+  const SAENG = { 목:'화', 화:'토', 토:'금', 금:'수', 수:'목' };
+  const ilOh = Y.ohaengOf(ilgan);
+  const guks = [...B.checkSamhap(branches), ...B.checkBanghap(branches)].map(g=>g.ohaeng);
+  const jaeCount = G1.countSipseongAll(saju, ['정재','편재']).count;
+  const salCount = G1.countSipseongAll(saju, ['정관','편관']).count;
+  const sikTuchul = stems.some(st => ['식신','상관'].includes(Y.getSipseong(ilgan, st)));
+  const jaeTuchul = stems.some(st => ['정재','편재'].includes(Y.getSipseong(ilgan, st)));
+  if (['임신','임자','임진','경신','경자','경진'].includes(ilju)) 근거.push(`${ilju}일생(조건①)`);
+  if (['무신','무자'].includes(ilju) && ((sikTuchul && jaeTuchul) || guks.includes('수'))) 근거.push(`${ilju}일 상관생재/수재국(조건②)`);
+  if (['기축','기묘'].includes(ilju) && (guks.includes(GEUK[ilOh]) || guks.includes(GEUKBY[ilOh]))) 근거.push(`${ilju}일 재·살국(조건②)`);
+  if (['병신','병자','병진'].includes(ilju) && jaeCount + salCount >= 4) 근거.push(`${ilju}일 재살왕(조건③)`);
+  if (['임','계'].includes(ilgan) && (guks.includes(SAENG[ilOh]) || guks.includes(GEUK[ilOh]))) 근거.push('임계일 식신국·재국(조건③)');
+  const woljiJeonggi = (T.JIJANGGAN[saju.mBranch]||[]).slice(-1)[0];
+  if (['식신','상관'].includes(Y.getSipseong(ilgan, woljiJeonggi)) && jaeTuchul) 근거.push('식상격에 재 투출 — 식상생재격(조건④)');
+  if (!근거.length) return { 성립:false };
+  return { 성립:true, 근거, 결과:'음식물업(여관·요리·다방·양조 등)을 하여 본다' };
+}
+function topic38_eumsikmulEop(saju) {
+  const r = checkEumsikmulEop(saju);
+  return { 판정: r.성립, 근거: r.근거||[], 결과: r.결과||null };
+}
+
+
+// ============================================================
+// 五三. 집에 들어오지 않는(가출한) 식구가 있다 (원문 221~224쪽 시각 판독)
+// 추리: 을사·신사·계사·정해·기해日 등 사·해(역마성 지지) 일주가
+// 주중에서 충(사해충 등)을 만난 者 — 역마 충동으로 밖으로 나감(해외 출입 포함)
+// ============================================================
+const GACHUL_ILJU = ['을사','신사','계사','정해','기해'];
+function checkGachul(saju) {
+  const ilju = saju.dStem + saju.dBranch;
+  const iljiSaHae = ['사','해'].includes(saju.dBranch);
+  if (!iljiSaHae) return { 성립:false };
+  const rel = getRelations(saju);
+  const chung = rel.충.some(c => c.includes(saju.dBranch));
+  if (!chung) return { 성립:false };
+  const 근거 = [`일지 ${saju.dBranch}(역마성)가 충을 맞음 — 역마 충동`];
+  if (GACHUL_ILJU.includes(ilju)) 근거.unshift(`${ilju}일생(원문 명시 일주)`);
+  return { 성립:true, 근거, 결과:'집에 들어오지 않는(가출·원행하는) 식구가 있다' };
+}
+function topic53_gachul(saju) {
+  const r = checkGachul(saju);
+  return { 판정: r.성립, 근거: r.근거||[], 결과: r.결과||null };
+}
+
+
+// ============================================================
+// 六三. 여명(女命)의 자손이 흉사했다 (원문 254~257쪽 시각 판독)
+// 여명 자손성 = 식신·상관. 추리: ① 식상이 백호대살에 임한 者
+// ② 식상(지지)이 형·충을 맞은 者 (수태왕이면 익사 유형)
+// ============================================================
+function checkJasonHyungsa(saju, sex) {
+  if (sex !== '여') return { 성립:false };
+  const ilgan = saju.dStem;
+  const 근거 = [];
+  const rel = getRelations(saju);
+  const pillars = [
+    [saju.yStem, saju.yBranch], [saju.mStem, saju.mBranch],
+    [saju.dStem, saju.dBranch], [saju.tStem, saju.tBranch],
+  ];
+  for (let i=0;i<4;i++) {
+    const [st, br] = pillars[i];
+    const stemIsSik = i!==2 && ['식신','상관'].includes(Y.getSipseong(ilgan, st));
+    const jeonggi = (T.JIJANGGAN[br]||[]).slice(-1)[0];
+    const brIsSik = ['식신','상관'].includes(Y.getSipseong(ilgan, jeonggi));
+    if (!stemIsSik && !brIsSik) continue;
+    if (BAEKHO_ILJU.includes(st+br)) 근거.push(`자손성(식상) 기둥(${st}${br})이 백호대살에 임함`);
+    if (brIsSik && (rel.충.some(c=>c.includes(br)) || rel.형.some(h=>h.includes(br)))) 근거.push(`자손성(식상, ${br})이 형·충을 맞음`);
+  }
+  if (!근거.length) return { 성립:false };
+  // 수태왕이면 익사 유형 부기
+  const suCount = pillars.filter(([st,br],i)=> T.BRANCH_OHAENG[br]==='수' || (i!==2 && T.STEM_OHAENG[st]==='수')).length;
+  const 결과 = suCount >= 3 ? '자손이 흉사하여 본다(수태왕 — 익사 유형)' : '자손이 흉사하여 본다';
+  return { 성립:true, 근거:[...new Set(근거)], 결과 };
+}
+function topic63_jasonHyungsa(saju, sex) {
+  const r = checkJasonHyungsa(saju, sex);
+  return { 판정: r.성립, 근거: r.근거||[], 결과: r.결과||null };
+}
+
+const TOPICS_6 = [
+  { id:63, 제목:'자손 흉사(여명)', fn: topic63_jasonHyungsa, needSex:true },
+  { id:53, 제목:'가출(역마충)', fn: topic53_gachul },
+  { id:38, 제목:'음식물업(식상생재)', fn: topic38_eumsikmulEop },
+  { id:37, 제목:'기생 직업(여명)', fn: topic37_gisaeng, needSex:true },
+  { id:16, 제목:'시모 불화(여명)', fn: topic16_simoBulhwa, needSex:true },
+  { id:15, 제목:'고부 불화', fn: topic15_gobuBulhwa },
+  { id:14, 제목:'이복형제', fn: topic14_ibokHyeongje },
+  { id:13, 제목:'장모 봉양', fn: topic13_jangmoBongyang },
+  { id:12, 제목:'조모·장모 두 분', fn: topic12_jomoJangmo },
+  { id:11, 제목:'외숙·처남 고독', fn: topic11_oesukCheonam },
+  { id:2, 제목:'선조봉사 무성의', fn: topic02_seonjoBongsa },
+  { id:7, 제목:'모친 재가', fn: topic07_mochinJaega },
+  { id:8, 제목:'여러 어머니(다봉인수)', fn: topic08_yeoreoEomeoni },
+  { id:9, 제목:'다른 아버지 밥(저자독창합)', fn: topic09_dareunAbeoji },
+];
+
+module.exports = { TOPICS_6, checkJasonHyungsa, topic63_jasonHyungsa, checkGachul, topic53_gachul, checkEumsikmulEop, topic38_eumsikmulEop, checkGisaeng, topic37_gisaeng, checkSimoBulhwa, topic16_simoBulhwa, checkGobuBulhwa, topic15_gobuBulhwa, checkIbokHyeongje, topic14_ibokHyeongje, checkJangmoBongyang, topic13_jangmoBongyang, checkJomoJangmo, topic12_jomoJangmo, checkOesukCheonam, topic11_oesukCheonam, checkSeonjoBongsa, topic02_seonjoBongsa, checkDareunAbeoji, topic09_dareunAbeoji, checkMochinJaega, topic07_mochinJaega, checkYeoreoEomeoni, topic08_yeoreoEomeoni };
