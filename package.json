@@ -1,0 +1,24 @@
+{
+  "name": "chapgyeong-engine",
+  "version": "0.92.0",
+  "description": "사주첩경(이석영) 명리 엔진 — 1·2·3·4·4下·6권 복원본",
+  "main": "chapgyeong-master.js",
+  "scripts": {
+    "test": "node test/run-all.js",
+    "eval": "node eval_vol2_vs_vol3.js",
+    "start": "node chapgyeong-server.js",
+    "test:app": "node test/app-flow.js"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "@fullstackfamily/manseryeok": "^1.0.8",
+    "jsdom": "^30.0.1"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "jsdom": "^24.0.0"
+  }
+}

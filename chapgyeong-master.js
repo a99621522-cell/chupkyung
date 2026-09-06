@@ -1,0 +1,111 @@
+// ============================================================
+// chapgyeong-master.js — 사주첩경 엔진 통합 진입점 (복원 재구성판)
+// 원본 analyzeAll(saju, sex) 구조를 복원된 모듈 세트에 맞춰 재구성.
+// 1권(신살·육친)+2권(통변 50주제)+4권(정격 13)+4권下(특수격 32)+
+// 6권(문답 50항목)+용신 3계층(v25, 사용자 보유 최종판)을 한 번에 호출.
+// ============================================================
+const V1 = require('./chapgyeong-vol1.js');
+const V2 = require('./chapgyeong-vol2.js');
+const V4 = require('./chapgyeong-vol4.js');
+const V4H = require('./chapgyeong-vol4ha.js');
+const V6 = require('./chapgyeong-vol6.js');
+
+let YONGSIN = null;
+try { YONGSIN = require('./chapgyeong-yongsin.js'); } catch (e) { /* 미배치 시 용신 생략 */ }
+// 억부 정련(v26) 선택 적용: analyzeAll(saju, sex, { yongsinV26:true }) 또는 환경변수 CHAPGYEONG_YONGSIN=v26
+let V26 = null; try { V26 = require('./chapgyeong-yongsin-v26.js'); } catch (e) {}
+let JOHU = null; try { JOHU = require('./chapgyeong-gungtong.js'); } catch (e) {}
+let ZP = null; try { ZP = require('./chapgyeong-zpjz-lite.js'); } catch (e) {}
+
+/**
+ * @param {object} saju - {yStem,yBranch,mStem,mBranch,dStem,dBranch,tStem,tBranch}
+ * @param {string} sex - '남'|'여'
+ */
+function analyzeAll(saju, sex, opts = {}) {
+  const useV26 = opts.yongsinV26 || process.env.CHAPGYEONG_YONGSIN === 'v26';
+  const out = {};
+  out.vol1 = V1.analyzeVol1(saju);
+  out.vol2 = V2.analyzeVol2(saju, sex);
+  out.vol4 = V4.analyzeVol4(saju);
+  out.vol4ha = V4H.analyzeVol4ha(saju, sex);
+  out.vol6 = V6.analyzeVol6(saju, sex);
+  if (YONGSIN) {
+    try {
+      // [어댑터] 종격 결과에 오행 글자가 없으면 격 이름에서 유도해 판정문에 주입
+      // (yongsin.js의 종격 오행 추출이 판정/용신 텍스트의 오행 글자에 의존하기 때문)
+      const ilOh = V1.Y.ohaengOf(saju.dStem);
+      const GEUK = { 목:'토', 화:'금', 토:'수', 금:'목', 수:'화' }; // 내가 극하는 것(재)
+      const GEUKBY = { 목:'금', 화:'수', 토:'목', 금:'화', 수:'토' }; // 나를 극하는 것(관살)
+      const SAENG = { 목:'화', 화:'토', 토:'금', 금:'수', 수:'목' };
+      const INSU = { 목:'수', 화:'목', 토:'화', 금:'토', 수:'금' };
+      const enrich = (arr) => (arr||[]).map(r => {
+        if (!r || !r.격 || !r.격.includes('종')) return r;
+        const txt = (r.판정||'') + (r.용신||'');
+        if (['목','화','토','금','수'].some(o => txt.includes(o))) return r;
+        let oh = null;
+        if (r.격.includes('종재')) oh = GEUK[ilOh];
+        else if (r.격.includes('종살')) oh = GEUKBY[ilOh];
+        else if (r.격.includes('종아')) oh = SAENG[ilOh];
+        else if (r.격.includes('종왕')) oh = ilOh;
+        else if (r.격.includes('종강') || r.격.includes('종인')) oh = INSU[ilOh];
+        if (!oh) return r;
+        return { ...r, 판정: (r.판정||'') + ` [종격 오행: ${oh}]` };
+      });
+      out.용신 = (useV26 && V26) ? V26.determineYongsinV26(saju, enrich(out.vol4), enrich(out.vol4ha), (out.vol6||[]).filter(r=>!r.참고), { ...opts })
+                                 : YONGSIN.determineYongsin(saju, enrich(out.vol4), enrich(out.vol4ha), (out.vol6||[]).filter(r=>!r.참고), { ...opts });
+    }
+    catch (e) { out.용신 = { 오류: e.message }; }
+  }
+  // [98차] 주격 — 4권 실례 56건 대조: 저자는 특수격이 성립하면 예외 없이 특수격을 그 사주의 격으로 삼음(22/22). 정격은 월령이 아니라 구조명(식신생재·재다신약봉운…)이라 단일 선택 규칙 미확정 → 후보 병기
+  try { const sp = (out.vol4ha||[]).filter(r=>r && r.성격!==false); const rg = (out.vol4||[]).filter(r=>r && r.성격!==false);
+    // [116차] 우열 규칙(4권 정형 라벨 22건 + 스캔 실례 5건 = 26/27):
+    //  월지 원신이 천간에 투출해 정격이 뚜렷하면 정격 우선 — 단 형식이 강한 특수격(형합·육을서귀·육임추간·협축재·종재·전왕)은 투출과 무관하게 특수격 우선
+    //  투출이 없으면 성립한 특수격 우선
+    const Tt = require('./chapgyeong-vol1-tables.js'); const wolOh = Tt.BRANCH_OHAENG[saju.mBranch];
+    // [128차] 투출 기준을 월지 지장간 전체로(자요사-아: 未中丁火 투출 → 眞傷官 정격 우선, 원문 140쪽)
+    // (128차 시험: 지장간 전체 투출은 자요사 순수례 3건을 정격으로 밀어 순손실 → 본기 유지, 자요사-아 1건은 예외로 남김)
+    const tu = [saju.yStem, saju.mStem, saju.tStem].some(x => x && Tt.STEM_OHAENG[x] === wolOh);
+    const STRONG = /형합|육을서귀|육음조양|육갑추건|육임추간|협축재|종재|종살|곡직|염상|가색|종혁|윤하|괴강|비천록마|도충|정란차|현무당권|구진득위|공록|공귀/; // [128차] TIER1. 자요사·축요사·임기룡배·복덕·합록·시묘는 TIER2(월지 원신 미투출일 때만 — 원문 128쪽 「月建 正格 있으면 正格 우선」)
+    const spNames = sp.map(r=>(r.격국명||r.격)+(r.파격?'(파격)':'')), rgNames = rg.map(r=>r.격국명||r.격);
+    // [128차] 파격 플래그 특수격은 주격 후보에서 제외(저자: 파격→별격 추심). 복수 성립 시 저자 선택 순(4권下 실례): 지지 다수 형식(전왕·임기룡배·괴강중첩·축요사·비천·정란차·현무·구진·복덕) > 일시 협공(공록공귀·협축재·자요사) > 일시 형식(합록·전재·형합·서귀·조양·추건·추간·시묘) > 일주 단독(재관쌍미·일덕·일귀·전록)
+    const PRI = ['곡직','염상','가색','종혁','윤하','종재','종살','임기룡배','괴강','축요사','비천','도충','정란차','현무당권','구진득위','복덕','공록','공귀','협축재','자요사','합록','전재','형합','육을서귀','육음조양','육갑추건','육임추간','시묘','귀록','금신','재관쌍미','일덕','일귀','전록'];
+    const prio = n => { const i = PRI.findIndex(k => (n||'').includes(k)); return i < 0 ? 99 : i; };
+    // [128차] 3층: TIER1 = 정격보다 우선(형식 강함·지지 다수·협공) / TIER2 = 월지 원신 미투출일 때만(일시 형식) / TIER3 = 주격이 되지 않는 참고격(일주 단독 — 저자 「神殺적 참고」 222쪽; 재관쌍미·일덕·일귀·전록·단일 괴강)
+    const TIER3 = /재관쌍미|일덕|일귀|전록|전재/; // 전재는 시상편재의 변형이라 4권上 정격 실례 7건과 충돌 → 참고격
+    const isRef = r => { const n=r.격국명||r.격||''; return TIER3.test(n) || (/괴강/.test(n) && (r.중첩||1) < 2); };
+    const spOk = sp.filter(r=>!r.파격 && !isRef(r)).map(r=>r.격국명||r.격).sort((a,b)=>prio(a)-prio(b));
+    const spRef = sp.filter(r=>isRef(r)).map(r=>(r.격국명||r.격)+(r.파격?'(파격)':''));
+    const strongSp = spOk.find(n=>STRONG.test(n)); // 파격·참고격 제외, 우선순위 정렬 후 첫 강형식
+    let 격=null, 근거='';
+    if (strongSp) { 격=strongSp; 근거='형식이 강한 특수격 성립 — 특수격 우선'; }
+    else if (spOk.length && !tu) { 격=spOk[0]; 근거='월지 원신 미투출 — 성립한 특수격 우선'; }
+    else if (rgNames.length) { 격=rgNames[0]; 근거= spOk.length ? '월지 원신 투출로 정격 뚜렷 — 시주 의존 특수격보다 정격 우선' : (spNames.length ? '특수격은 파격 — 별격(정격) 추심' : '정격 후보(단일 선택 규칙은 구조명 문제로 미확정, 첫 후보 표기)'); }
+    else if (spOk.length) { 격=spOk[0]; 근거='정격 없음 — 특수격'; }
+    else if (spNames.length) { 격=spNames[0]; 근거='정격도 없음 — 파격 특수격 표기'; }
+    out.주격 = { 격, 근거, 원신투출: tu, 후보정격: rgNames, 후보특수격: spNames, 참고특수격: spRef }; } catch (e) {}
+  // 병렬 관법(통합하지 않음): 궁통보감 조후 / 자평진전 약식
+  try { if (JOHU) out.조후 = JOHU.analyzeJohu(saju); } catch (e) { out.조후 = { 성립:false, error:e.message }; }
+  try { if (ZP) out.자평약식 = ZP.analyzeZpjz(saju); } catch (e) { out.자평약식 = { error:e.message }; }
+  return out;
+}
+
+function summarize(results) {
+  const lines = [];
+  if (results.용신) lines.push(`[용신] ${JSON.stringify(results.용신.용신 || results.용신)}`);
+  if (results.vol4 && results.vol4.length) lines.push(`[4권 정격] ${results.vol4.map(r=>r.격국명||r.격).join(', ')}`);
+  if (results.vol4ha && results.vol4ha.length) lines.push(`[4권下 특수격] ${results.vol4ha.map(r=>r.격국명||r.격).join(', ')}`);
+  if (results.vol6 && results.vol6.length) lines.push(`[6권 문답] ${results.vol6.map(r=>r.제목).join(', ')}`);
+  if (results.vol1) {
+    const keys = Object.keys(results.vol1).filter(k => {
+      const v = results.vol1[k];
+      return Array.isArray(v) ? v.length > 0 : !!v;
+    });
+    if (keys.length) lines.push(`[1권 신살·육친] ${keys.join(', ')}`);
+  }
+  if (results.vol2 && Array.isArray(results.vol2) && results.vol2.length > 0) {
+    lines.push(`[2권 통변] ${results.vol2.length}개 주제 해당`);
+  }
+  return lines.join('\n');
+}
+
+module.exports = { analyzeAll, summarize };

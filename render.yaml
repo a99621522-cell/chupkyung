@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: chapgyeong-relay
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node chapgyeong-server.js
+    envVars:
+      - key: LLM_PROVIDER
+        value: claude
+      - key: CLAUDE_MODEL
+        value: claude-sonnet-5
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ALLOW_ORIGIN
+        value: https://earnest-meerkat-4f5b9a.netlify.app
+      - key: RETRY
+        value: "2"
+      - key: RATE_PER_HOUR
+        value: "20"
